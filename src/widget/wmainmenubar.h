@@ -62,6 +62,7 @@ class WMainMenuBar : public QMenuBar {
     void createCrate();
     void createPlaylist();
     void loadTrackToDeck(int deck);
+    void pasteTrackToDeck(int deck);
     void reloadSkin();
     void rescanLibrary();
 #ifdef __ENGINEPRIME__
@@ -113,5 +114,6 @@ class WMainMenuBar : public QMenuBar {
     QAction* m_pViewKeywheel;
     ConfigObject<ConfigValueKbd>* m_pKbdConfig;
     QList<QAction*> m_loadToDeckActions;
+    QList<QAction*> m_pasteToDeckActions;
     QList<QAction*> m_vinylControlEnabledActions;
 };

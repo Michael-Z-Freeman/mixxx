@@ -1,9 +1,14 @@
 #include "mixxxmainwindow.h"
 
 #include <QCheckBox>
+#include <QClipboard>
 #include <QCloseEvent>
 #include <QDebug>
 #include <QFileDialog>
+#include <QDir>
+#include <QFileInfo>
+#include <QGuiApplication>
+#include <QMimeData>
 #include <QOpenGLContext>
 #include <QUrl>
 
@@ -836,6 +841,11 @@ void MixxxMainWindow::connectMenuBar() {
             this,
             &MixxxMainWindow::slotFileLoadSongPlayer,
             Qt::UniqueConnection);
+    connect(m_pMenuBar,
+            &WMainMenuBar::pasteTrackToDeck,
+            this,
+            &MixxxMainWindow::slotEditPasteTrackToDeck,
+            Qt::UniqueConnection);
 
     connect(m_pMenuBar,
             &WMainMenuBar::showKeywheel,
@@ -1020,26 +1030,31 @@ void MixxxMainWindow::slotUpdateMenuBarAltKeyConnection() {
 }
 #endif
 
-void MixxxMainWindow::slotFileLoadSongPlayer(int deck) {
-    QString group = PlayerManager::groupForDeck(deck - 1);
-
-    QString loadTrackText = tr("Load track to Deck %1").arg(QString::number(deck));
-    QString deckWarningMessage = tr("Deck %1 is currently playing a track.")
-            .arg(QString::number(deck));
-    QString areYouSure = tr("Are you sure you want to load a new track?");
-
-    if (ControlObject::get(ConfigKey(group, "play")) > 0.0) {
-        int ret = QMessageBox::warning(this,
-                VersionStore::applicationName(),
-                deckWarningMessage + "\n" + areYouSure,
-                QMessageBox::Yes | QMessageBox::No,
-                QMessageBox::No);
-
-        if (ret != QMessageBox::Yes) {
-            return;
-        }
+bool MixxxMainWindow::confirmDeckReadyForLoad(int deck) {
+    DEBUG_ASSERT(deck >= 1);
+    const QString group = PlayerManager::groupForDeck(deck - 1);
+    if (ControlObject::get(ConfigKey(group, "play")) <= 0.0) {
+        return true;
     }
 
+    const QString deckWarningMessage =
+            tr("Deck %1 is currently playing a track.").arg(QString::number(deck));
+    const QString areYouSure = tr("Are you sure you want to load a new track?");
+
+    const int userChoice = QMessageBox::warning(this,
+            VersionStore::applicationName(),
+            deckWarningMessage + "\n" + areYouSure,
+            QMessageBox::Yes | QMessageBox::No,
+            QMessageBox::No);
+    return userChoice == QMessageBox::Yes;
+}
+
+void MixxxMainWindow::slotFileLoadSongPlayer(int deck) {
+    if (!confirmDeckReadyForLoad(deck)) {
+        return;
+    }
+
+    QString loadTrackText = tr("Load track to Deck %1").arg(QString::number(deck));
     UserSettingsPointer pConfig = m_pCoreServices->getSettings();
     QString trackPath =
             QFileDialog::getOpenFileName(
@@ -1060,6 +1075,78 @@ void MixxxMainWindow::slotFileLoadSongPlayer(int deck) {
 
         m_pCoreServices->getPlayerManager()->slotLoadToDeck(trackPath, deck);
     }
+}
+
+void MixxxMainWindow::slotEditPasteTrackToDeck(int deck) {
+    if (!confirmDeckReadyForLoad(deck)) {
+        return;
+    }
+
+    const QClipboard* clipboard = QGuiApplication::clipboard();
+    if (!clipboard) {
+        return;
+    }
+
+    const QMimeData* mimeData = clipboard->mimeData();
+    if (!mimeData) {
+        QMessageBox::warning(this,
+                VersionStore::applicationName(),
+                tr("Clipboard does not contain a valid local file path."));
+        return;
+    }
+
+    QString trackPath;
+    if (mimeData->hasUrls()) {
+        for (const QUrl& url : mimeData->urls()) {
+            if (url.isLocalFile()) {
+                trackPath = url.toLocalFile();
+                if (!trackPath.isEmpty()) {
+                    break;
+                }
+            }
+        }
+    }
+
+    if (trackPath.isEmpty() && mimeData->hasText()) {
+        QString text = mimeData->text();
+        if (!text.isEmpty()) {
+            text.replace("\r\n", "\n");
+            QString candidate = text.section('\n', 0, 0).trimmed();
+            candidate.remove('\r');
+            if (!candidate.isEmpty()) {
+                QUrl candidateUrl(candidate);
+                if (candidateUrl.isLocalFile()) {
+                    trackPath = candidateUrl.toLocalFile();
+                } else {
+                    QFileInfo candidateInfo(candidate);
+                    if (candidateInfo.exists()) {
+                        trackPath = candidateInfo.absoluteFilePath();
+                    }
+                }
+            }
+        }
+    }
+
+    if (trackPath.isEmpty()) {
+        QMessageBox::warning(this,
+                VersionStore::applicationName(),
+                tr("Clipboard does not contain a valid local file path."));
+        return;
+    }
+
+    QFileInfo trackInfo(trackPath);
+    if (!trackInfo.exists() || !trackInfo.isFile()) {
+        QMessageBox::warning(this,
+                VersionStore::applicationName(),
+                tr("The file \"%1\" could not be found.")
+                        .arg(QDir::toNativeSeparators(trackPath)));
+        return;
+    }
+
+    mixxx::FileInfo fileInfo(trackInfo);
+    Sandbox::createSecurityToken(&fileInfo);
+
+    m_pCoreServices->getPlayerManager()->slotLoadToDeck(fileInfo.location(), deck);
 }
 
 void MixxxMainWindow::slotDeveloperTools(bool visible) {

@@ -135,6 +135,34 @@ void WMainMenuBar::initialize() {
 
     addMenu(pFileMenu);
 
+    // EDIT MENU
+    QMenu* pEditMenu = new QMenu(tr("&Edit"), this);
+#ifndef __APPLE__
+    connectMenuToSlotShowMenuBar(pEditMenu);
+#endif
+
+    QString pasteTrackText = tr("Paste Track to Deck &%1");
+    QString pasteTrackStatusText = tr("Loads a track from the clipboard into deck %1");
+    for (unsigned int deck = 0; deck < kMaxLoadToDeckActions; ++deck) {
+        QString deckNumber = QString::number(deck + 1);
+        QAction* pEditPasteToDeck = new QAction(
+                pasteTrackText.arg(deckNumber), this);
+        pEditPasteToDeck->setStatusTip(pasteTrackStatusText.arg(deckNumber));
+        pEditPasteToDeck->setWhatsThis(
+                buildWhatsThis(pasteTrackText.arg(deckNumber),
+                        pasteTrackStatusText.arg(deckNumber)));
+        pEditPasteToDeck->setVisible(false);
+        connect(pEditPasteToDeck,
+                &QAction::triggered,
+                this,
+                [this, deck] { emit pasteTrackToDeck(deck + 1); });
+
+        pEditMenu->addAction(pEditPasteToDeck);
+        m_pasteToDeckActions.push_back(pEditPasteToDeck);
+    }
+
+    addMenu(pEditMenu);
+
     // LIBRARY MENU
     QMenu* pLibraryMenu = new QMenu(tr("&Library"), this);
 #ifndef __APPLE__
@@ -962,6 +990,10 @@ void WMainMenuBar::onNumberOfDecksChanged(int decks) {
     deck = 0;
     for (QAction* pLoadToDeck : std::as_const(m_loadToDeckActions)) {
         pLoadToDeck->setVisible(deck++ < decks);
+    }
+    deck = 0;
+    for (QAction* pPasteToDeck : std::as_const(m_pasteToDeckActions)) {
+        pPasteToDeck->setVisible(deck++ < decks);
     }
 }
 

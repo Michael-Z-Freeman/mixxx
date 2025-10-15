@@ -60,6 +60,7 @@ class MixxxMainWindow : public QMainWindow {
     void rebootMixxxView();
 
     void slotFileLoadSongPlayer(int deck);
+    void slotEditPasteTrackToDeck(int deck);
     /// show the preferences dialog
     void slotOptionsPreferences();
     /// show the about dialog
@@ -107,6 +108,7 @@ class MixxxMainWindow : public QMainWindow {
   private:
     void initializeWindow();
     void checkDirectRendering();
+    bool confirmDeckReadyForLoad(int deck);
 
     /// Load skin to a QWidget that we set as the central widget.
     bool loadConfiguredSkin();
