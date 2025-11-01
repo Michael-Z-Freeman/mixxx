@@ -682,6 +682,11 @@ void Tooltips::addStandardTooltips() {
             << tr("Changes the track playback speed (affects both the tempo and the pitch). If keylock is enabled, only the tempo is affected.")
             << resetWithRightAndDoubleClick;
 
+    add("rate_spring")
+            << tr("Pitch Spring")
+            << tr("Returns the tempo fader to center automatically after releasing the mouse or keyboard so you can perform temporary nudges.")
+            << tr("Disable to leave the fader where you release it.");
+
     add("pitch")
             << tr("Pitch Control")
             << tr("Changes the track pitch independent of the tempo.")

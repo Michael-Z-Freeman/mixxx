@@ -122,37 +122,54 @@
 
                   <!-- Rate slider + center indicator -->
                   <WidgetGroup>
-                    <Size>54f,121f</Size>
+                    <Layout>vertical</Layout>
+                    <Size>54f,145f</Size>
+                    <SizePolicy>min,min</SizePolicy>
                     <Children>
-                      <Label>
-                        <ObjectName>RateCenter</ObjectName>
-                        <Size>5f,5f</Size>
-                        <Pos>2,59</Pos>
-                        <Connection>
-                          <ConfigKey><Variable name="Group"/>,rate_set_default</ConfigKey>
-                          <BindProperty>highlight</BindProperty>
-                        </Connection>
-                      </Label>
-                      <SliderComposed>
-                        <ObjectName>RateSlider</ObjectName>
-                        <Size>40f,119f</Size>
-                        <Pos>5,2</Pos>
-                        <TooltipId>rate</TooltipId>
-                        <Handle scalemode="STRETCH_ASPECT">skins:LateNight/<Variable name="SliderScheme"/>/sliders/knob_pitch_deck.svg</Handle>
-                        <Slider scalemode="STRETCH_ASPECT">skins:LateNight/<Variable name="SliderScheme"/>/sliders/slider_pitch_deck.svg</Slider>
-                        <Horizontal>false</Horizontal>
-                        <BarWidth><Variable name="BarWidth"/></BarWidth>
-                        <BarMargins><Variable name="BarMarginPitch"/></BarMargins>
-                        <BarColor><Variable name="BarColorPitch"/></BarColor>
-                        <BarRoundCaps>true</BarRoundCaps>
-                        <BarAxisPos>20.0</BarAxisPos>
-                        <BarUnipolar>false</BarUnipolar>
-                        <Connection>
-                          <ConfigKey><Variable name="Group"/>,rate</ConfigKey>
-                        </Connection>
-                      </SliderComposed>
+                      <WidgetGroup>
+                        <Size>54f,121f</Size>
+                        <Children>
+                          <Label>
+                            <ObjectName>RateCenter</ObjectName>
+                            <Size>5f,5f</Size>
+                            <Pos>2,59</Pos>
+                            <Connection>
+                              <ConfigKey><Variable name="Group"/>,rate_set_default</ConfigKey>
+                              <BindProperty>highlight</BindProperty>
+                            </Connection>
+                          </Label>
+                          <SliderComposed>
+                            <ObjectName>RateSlider</ObjectName>
+                            <Size>40f,119f</Size>
+                            <Pos>5,2</Pos>
+                            <TooltipId>rate</TooltipId>
+                            <Handle scalemode="STRETCH_ASPECT">skins:LateNight/<Variable name="SliderScheme"/>/sliders/knob_pitch_deck.svg</Handle>
+                            <Slider scalemode="STRETCH_ASPECT">skins:LateNight/<Variable name="SliderScheme"/>/sliders/slider_pitch_deck.svg</Slider>
+                            <Horizontal>false</Horizontal>
+                            <BarWidth><Variable name="BarWidth"/></BarWidth>
+                            <BarMargins><Variable name="BarMarginPitch"/></BarMargins>
+                            <BarColor><Variable name="BarColorPitch"/></BarColor>
+                            <BarRoundCaps>true</BarRoundCaps>
+                            <BarAxisPos>20.0</BarAxisPos>
+                            <BarUnipolar>false</BarUnipolar>
+                            <Connection>
+                              <ConfigKey><Variable name="Group"/>,rate</ConfigKey>
+                            </Connection>
+                            <AutoReturnControl><Variable name="Group"/>,rate_spring_enabled</AutoReturnControl>
+                          </SliderComposed>
+                        </Children>
+                      </WidgetGroup>
+                      <Template src="skins:LateNight/controls/button_2state_persist.xml">
+                        <SetVariable name="TooltipId">rate_spring</SetVariable>
+                        <SetVariable name="ObjectName">RateSpringToggle</SetVariable>
+                        <SetVariable name="Size">46f,20f</SetVariable>
+                        <SetVariable name="state_0_text">Spring</SetVariable>
+                        <SetVariable name="state_1_text">Spring</SetVariable>
+                        <SetVariable name="Align">center</SetVariable>
+                        <SetVariable name="ConfigKey"><Variable name="Group"/>,rate_spring_enabled</SetVariable>
+                      </Template>
                     </Children>
-                  </WidgetGroup><!-- Rate slider + center indicator -->
+                  </WidgetGroup><!-- Rate slider + center indicator + spring toggle -->
 
                   <WidgetGroup><!-- Rate range indicators -->
                     <SizePolicy>min,me</SizePolicy>

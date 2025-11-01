@@ -51,6 +51,8 @@ RateControl::RateControl(const QString& group, UserSettingsPointer pConfig)
           // adjustments are not capped.
           m_pRateSlider(std::make_unique<ControlPotmeter>(
                   ConfigKey(group, QStringLiteral("rate")), -1.0, 1.0, true)),
+          m_pRateSpringEnabled(std::make_unique<ControlPushButton>(
+                  ConfigKey(group, QStringLiteral("rate_spring_enabled")), true)),
           // Search rate. Rate used when searching in sound. This overrules the
           // playback rate
           m_pRateSearch(std::make_unique<ControlPotmeter>(
@@ -147,6 +149,8 @@ RateControl::RateControl(const QString& group, UserSettingsPointer pConfig)
             this,
             &RateControl::slotRateSliderChanged,
             Qt::DirectConnection);
+    m_pRateSpringEnabled->setButtonMode(mixxx::control::ButtonMode::Toggle);
+    m_pRateSpringEnabled->set(0.0);
 
     m_pReverseButton->set(0);
 

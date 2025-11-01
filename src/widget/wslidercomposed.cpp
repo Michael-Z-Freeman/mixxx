@@ -1,11 +1,14 @@
 #include "widget/wslidercomposed.h"
 
 #include <QStringView>
+#include <QKeyEvent>
 #include <QStyleOption>
 #include <QStylePainter>
 #include <QtDebug>
 
+#include "control/controlproxy.h"
 #include "moc_wslidercomposed.cpp"
+#include "preferences/configobject.h"
 #include "skin/legacy/skincontext.h"
 #include "util/debug.h"
 #include "widget/controlwidgetconnection.h"
@@ -29,10 +32,15 @@ WSliderComposed::WSliderComposed(QWidget* parent)
           m_barBgColor(nullptr),
           m_barPenCap(Qt::FlatCap),
           m_pSlider(nullptr),
-          m_pHandle(nullptr) {
+          m_pHandle(nullptr),
+          m_pAutoReturnControl(nullptr) {
 }
 
 WSliderComposed::~WSliderComposed() {
+    if (m_pAutoReturnControl != nullptr) {
+        m_pAutoReturnControl->deleteLater();
+        m_pAutoReturnControl = nullptr;
+    }
     unsetPixmaps();
 }
 
@@ -53,6 +61,11 @@ bool WSliderComposed::tryParseHorizontal(const QDomNode& node) const {
 void WSliderComposed::setup(const QDomNode& node, const SkinContext& context) {
     // Setup pixmaps
     unsetPixmaps();
+
+    if (m_pAutoReturnControl != nullptr) {
+        m_pAutoReturnControl->deleteLater();
+        m_pAutoReturnControl = nullptr;
+    }
 
     m_bHorizontal = context.selectBool(node, "Horizontal", false);
 
@@ -176,6 +189,17 @@ void WSliderComposed::setup(const QDomNode& node, const SkinContext& context) {
     }
 
     setFocusPolicy(Qt::NoFocus);
+
+    QString autoReturnConfig;
+    if (context.hasNodeSelectString(node, "AutoReturnControl", &autoReturnConfig)) {
+        const ConfigKey key = ConfigKey::parseCommaSeparated(autoReturnConfig);
+        if (key.isValid()) {
+            m_pAutoReturnControl = new ControlProxy(key, this);
+        } else {
+            SKIN_WARNING(node, context, QStringLiteral("Invalid AutoReturnControl config key: \"%1\"")
+                                                   .arg(autoReturnConfig));
+        }
+    }
 }
 
 void WSliderComposed::setSliderPixmap(const PixmapSource& sourceSlider,
@@ -222,6 +246,9 @@ void WSliderComposed::wheelEvent(QWheelEvent *e) {
 
 void WSliderComposed::mouseReleaseEvent(QMouseEvent * e) {
     m_handler.mouseReleaseEvent(this, e);
+    if (e->button() == Qt::LeftButton && autoReturnActive()) {
+        resetControlParameter();
+    }
 }
 
 void WSliderComposed::mousePressEvent(QMouseEvent * e) {
@@ -230,6 +257,13 @@ void WSliderComposed::mousePressEvent(QMouseEvent * e) {
 
 void WSliderComposed::mouseDoubleClickEvent(QMouseEvent* e) {
     m_handler.mouseDoubleClickEvent(this, e);
+}
+
+void WSliderComposed::keyReleaseEvent(QKeyEvent* e) {
+    QWidget::keyReleaseEvent(e);
+    if (!e->isAutoRepeat() && autoReturnActive()) {
+        resetControlParameter();
+    }
 }
 
 void WSliderComposed::paintEvent(QPaintEvent * /*unused*/) {
@@ -389,4 +423,8 @@ double WSliderComposed::calculateHandleLength() {
 
 void WSliderComposed::inputActivity() {
     update();
+}
+
+bool WSliderComposed::autoReturnActive() const {
+    return m_pAutoReturnControl != nullptr && m_pAutoReturnControl->toBool();
 }

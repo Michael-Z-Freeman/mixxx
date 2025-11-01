@@ -8,6 +8,13 @@
 
 class QDomNode;
 class SkinContext;
+class ControlProxy;
+class QMouseEvent;
+class QWheelEvent;
+class QResizeEvent;
+class QPaintEvent;
+class QKeyEvent;
+class QPainter;
 
 /// A widget for a slider composed of a background pixmap and a handle.
 class WSliderComposed : public WWidget  {
@@ -42,6 +49,7 @@ class WSliderComposed : public WWidget  {
     void mouseReleaseEvent(QMouseEvent* e) override;
     void mousePressEvent(QMouseEvent* e) override;
     void mouseDoubleClickEvent(QMouseEvent* e) override;
+    void keyReleaseEvent(QKeyEvent* e) override;
     void paintEvent(QPaintEvent* e) override;
     void drawBar(QPainter* pPainter);
     void wheelEvent(QWheelEvent* e) override;
@@ -74,6 +82,8 @@ class WSliderComposed : public WWidget  {
     // Pointer to pixmap of the handle
     PaintablePointer m_pHandle;
     SliderEventHandler<WSliderComposed> m_handler;
+    ControlProxy* m_pAutoReturnControl;
 
+    bool autoReturnActive() const;
     friend class SliderEventHandler<WSliderComposed>;
 };
