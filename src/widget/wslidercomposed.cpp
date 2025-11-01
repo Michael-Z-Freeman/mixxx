@@ -14,6 +14,7 @@
 #include "widget/controlwidgetconnection.h"
 #include "widget/wpixmapstore.h"
 #include "widget/wskincolor.h"
+#include "util/math.h"
 
 WSliderComposed::WSliderComposed(QWidget* parent)
         : WWidget(parent),
@@ -253,6 +254,22 @@ void WSliderComposed::mouseReleaseEvent(QMouseEvent * e) {
 
 void WSliderComposed::mousePressEvent(QMouseEvent * e) {
     m_handler.mousePressEvent(this, e);
+    if (e->button() == Qt::LeftButton && autoReturnActive()) {
+        double pos;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        pos = m_bHorizontal ? e->position().x() : e->position().y();
+#else
+        pos = m_bHorizontal ? e->x() : e->y();
+#endif
+        pos -= m_dHandleLength / 2.0;
+        if (m_dSliderLength - m_dHandleLength > 0.0) {
+            pos = math_clamp(pos, 0.0, m_dSliderLength - m_dHandleLength);
+        }
+        double parameter = m_handler.positionToParameter(pos);
+        setControlParameter(parameter);
+        m_handler.onConnectedControlChanged(this, parameter);
+        inputActivity();
+    }
 }
 
 void WSliderComposed::mouseDoubleClickEvent(QMouseEvent* e) {
